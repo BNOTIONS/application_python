@@ -26,13 +26,6 @@ action :before_compile do
 
   include_recipe "supervisor"
 
-  install_packages
-
-  django_resource = new_resource.application.sub_resources.select{|res| res.type == :django}.first
-  gunicorn_install "gunicorn-#{new_resource.application.name}" do
-    virtualenv django_resource ? django_resource.virtualenv : new_resource.virtualenv
-  end
-
   if !new_resource.restart_command
     r = new_resource
     new_resource.restart_command do
@@ -45,6 +38,17 @@ action :before_compile do
 end
 
 action :before_deploy do
+
+  if new_resource.virtualenv.kind_of? Symbol
+    linked_resource = new_resource.application.sub_resources.select{|res| res.type == new_resource.virtualenv}.first
+    new_resource.virtualenv linked_resource.virtualenv if linked_resource
+  end
+
+  install_packages
+
+  gunicorn_install "gunicorn-#{new_resource.application.name}" do
+    virtualenv new_resource.virtualenv
+  end
 
   new_resource = @new_resource
 

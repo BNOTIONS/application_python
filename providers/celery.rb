@@ -50,6 +50,11 @@ end
 
 action :before_deploy do
 
+  if new_resource.virtualenv.kind_of Symbol
+    linked_resource = new_resource.application.sub_resource.select{|res| res.type == new_resource.virtualenv}.first
+    new_resource.virtualenv linked_resource.virtualenv if linked_resource
+  end
+
   new_resource = @new_resource
 
   template ::File.join(new_resource.application.path, "shared", new_resource.config_base) do
