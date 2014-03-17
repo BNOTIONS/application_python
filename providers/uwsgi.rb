@@ -25,9 +25,9 @@ end
 
 action :before_deploy do
 
-  django_resource = new_resource.application.sub_resources.select{|res| res.type == :django}.first
-  if django_resource && new_resource.virtualenv.nil?
-    new_resource.virtualenv django_resource.virtualenv
+  if new_resource.virtualenv.kind_of Symbol
+    linked_resource = new_resource.application.sub_resource.select{|res| res.type == new_resource.virtualenv}.first
+    new_resource.virtualenv linked_resource.virtualenv if linked_resource
   end
 
   install_packages
