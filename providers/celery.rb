@@ -1,7 +1,7 @@
 #
 # Author:: Noah Kantrowitz <noah@opscode.com>
 # Cookbook Name:: application_python
-# Provider:: django
+# Provider:: celery
 #
 # Copyright:: 2011, Opscode, Inc <legal@opscode.com>
 #
@@ -50,9 +50,14 @@ end
 
 action :before_deploy do
 
-  if new_resource.virtualenv.kind_of Symbol
-    linked_resource = new_resource.application.sub_resource.select{|res| res.type == new_resource.virtualenv}.first
-    new_resource.virtualenv linked_resource.virtualenv if linked_resource
+  unless new_resource.nil?
+    case new_resource.virtualenv
+    when Symbol
+      linked_resource = new_resource.application.sub_resources.select{|res| res.type == new_resource.virtualenv}.first
+      new_resource.virtualenv linked_resource.virtualenv if linked_resource
+    when String
+      install_virtualenv
+    end
   end
 
   new_resource = @new_resource
@@ -126,3 +131,15 @@ end
 
 action :after_restart do
 end
+
+protected
+
+def install_virtualenv
+  python_virtualenv new_resource.virtualenv do
+    path new_resource.virtualenv
+    owner new_resource.owner
+    group new_resource.group
+    action :create
+  end
+end
+
